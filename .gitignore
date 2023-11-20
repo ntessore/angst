@@ -1,0 +1,4 @@
+docs/_build
+.*.swp
+__pycache__
+src/angst/_version.py

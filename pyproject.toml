@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[project]
+name = "angst"
+description = "Angular statistics"
+readme = "README.md"
+license = "MIT"
+authors = [
+    {name = "Nicolas Tessore", email = "n.tessore@ucl.ac.uk"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "numpy>=1.20.0",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=6.0",
+]
+docs = [
+    "sphinx",
+    "furo",
+    "sphinxcontrib-katex",
+    "numpydoc",
+]
+
+[project.urls]
+Documentation = "https://angst.readthedocs.io/"
+Repository = "https://github.com/ntessore/angst"
+Issues = "https://github.com/ntessore/angst/issues"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/angst/_version.py"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "--import-mode importlib"
