@@ -33,7 +33,7 @@ def spectra_indices(n: int) -> Iterator[tuple[int, int]]:
     <spectra_order>` for a set of spectra for *n* functions.  Each item
     is a tuple of indices *i*, *j*.
 
-    >>> list(spectrum_indices(3))
+    >>> list(spectra_indices(3))
     [(0, 0), (1, 1), (1, 0), (2, 2), (2, 1), (2, 0)]
 
     """
