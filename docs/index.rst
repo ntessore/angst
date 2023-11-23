@@ -10,6 +10,8 @@
    :caption: Contents:
 
    points
+   spectra
+   core
    glossary
 
 

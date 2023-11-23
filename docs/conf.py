@@ -18,6 +18,7 @@ release = angst_version
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
+    "sphinx.ext.intersphinx",
     "sphinx.ext.autodoc",
     "sphinxcontrib.katex",
     "numpydoc",
@@ -35,6 +36,14 @@ html_static_path = ["_static"]
 html_theme_options = {
     "light_logo": "logo-light.svg",
     "dark_logo": "logo-dark.svg",
+}
+
+
+# -- Intersphinx -------------------------------------------------------------
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
 }
 
 

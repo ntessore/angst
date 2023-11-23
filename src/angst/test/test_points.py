@@ -3,53 +3,53 @@ import numpy.testing as npt
 
 
 def test_displace_arg_complex():
-    from angst import displace
+    import angst
 
     d = 5.0
     r = np.radians(d)
 
     # north
-    lon, lat = displace(0.0, 0.0, r + 0j)
+    lon, lat = angst.displace(0.0, 0.0, r + 0j)
     assert np.allclose([lon, lat], [0.0, d])
 
     # south
-    lon, lat = displace(0.0, 0.0, -r + 0j)
+    lon, lat = angst.displace(0.0, 0.0, -r + 0j)
     assert np.allclose([lon, lat], [0.0, -d])
 
     # east
-    lon, lat = displace(0.0, 0.0, 1j * r)
+    lon, lat = angst.displace(0.0, 0.0, 1j * r)
     assert np.allclose([lon, lat], [-d, 0.0])
 
     # west
-    lon, lat = displace(0.0, 0.0, -1j * r)
+    lon, lat = angst.displace(0.0, 0.0, -1j * r)
     assert np.allclose([lon, lat], [d, 0.0])
 
 
 def test_displace_arg_real():
-    from angst import displace
+    import angst
 
     d = 5.0
     r = np.radians(d)
 
     # north
-    lon, lat = displace(0.0, 0.0, [r, 0])
+    lon, lat = angst.displace(0.0, 0.0, [r, 0])
     assert np.allclose([lon, lat], [0.0, d])
 
     # south
-    lon, lat = displace(0.0, 0.0, [-r, 0])
+    lon, lat = angst.displace(0.0, 0.0, [-r, 0])
     assert np.allclose([lon, lat], [0.0, -d])
 
     # east
-    lon, lat = displace(0.0, 0.0, [0, r])
+    lon, lat = angst.displace(0.0, 0.0, [0, r])
     assert np.allclose([lon, lat], [-d, 0.0])
 
     # west
-    lon, lat = displace(0.0, 0.0, [0, -r])
+    lon, lat = angst.displace(0.0, 0.0, [0, -r])
     assert np.allclose([lon, lat], [d, 0.0])
 
 
 def test_displace_abs(rng):
-    from angst import displace
+    import angst
 
     n = 1000
     abs_alpha = rng.uniform(0, 2 * np.pi, size=n)
@@ -58,7 +58,7 @@ def test_displace_abs(rng):
     lon_ = np.degrees(rng.uniform(-np.pi, np.pi, size=n))
     lat_ = np.degrees(np.arcsin(rng.uniform(-1, 1, size=n)))
 
-    lon, lat = displace(lon_, lat_, abs_alpha * np.exp(1j * arg_alpha))
+    lon, lat = angst.displace(lon_, lat_, abs_alpha * np.exp(1j * arg_alpha))
 
     th = np.radians(90.0 - lat)
     th_ = np.radians(90.0 - lat_)
