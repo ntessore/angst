@@ -5,6 +5,8 @@ this package.
 
 """
 
+from __future__ import annotations
+
 __all__ = [
     "inv_triangle_number",
 ]
