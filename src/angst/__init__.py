@@ -5,6 +5,7 @@ __all__ = [
     "displacement",
     "enumerate_spectra",
     "inv_triangle_number",
+    "regularized_spectra",
     "spectra_indices",
     "__version__",
     "__version_tuple__",
@@ -19,6 +20,7 @@ from ._points import (
 )
 from ._spectra import (
     enumerate_spectra,
+    regularized_spectra,
     spectra_indices,
 )
 from ._version import (

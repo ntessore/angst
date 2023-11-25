@@ -13,6 +13,7 @@
    spectra
    core
    glossary
+   references
 
 
 Indices and tables
