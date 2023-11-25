@@ -38,3 +38,18 @@ in the first :math:`T_n = n \, (n + 1) / 2` entries of the sequence.
 To easily generate or iterate over sequences of angular power spectra in
 standard order, see the :func:`enumerate_spectra` and :func:`spectra_indices`
 functions.
+
+
+Regularisation
+--------------
+
+When sets of angular power spectra are used to sample random fields, their
+matrix :math:`C_\ell^{ij}` for fixed :math:`\ell` must form a valid
+positive-definite covariance matrix.  This is not always the case, for example
+due to numerical inaccuracies, or transformations of the underlying fields
+[Xavier16]_.
+
+Regularisation takes sets of spectra which are ill-posed for sampling, and
+returns sets which are well-defined and, in some sense, "close" to the input.
+
+.. autofunction:: regularized_spectra
