@@ -9,7 +9,7 @@
 from angst import __version__ as angst_version
 
 project = "angst"
-copyright = "2023, Nicolas Tessore"
+copyright = "2023-2024, Nicolas Tessore"
 author = "Nicolas Tessore"
 version = angst_version.partition("+")[0]
 release = version
