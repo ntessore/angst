@@ -20,7 +20,7 @@ def enumerate2(
     from the input.
 
     >>> spectra = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
-    >>> list(angst.enumerate2(spectra))
+    >>> list(enumerate2(spectra))
     [(0, 0, [1, 2, 3]), (1, 1, [4, 5, 6]), (1, 0, [7, 8, 9])]
 
     """
@@ -37,7 +37,7 @@ def indices2(n: int) -> Iterator[tuple[int, int]]:
     for a set of two-point functions for *n* fields.  Each item is a tuple of
     indices *i*, *j*.
 
-    >>> list(angst.indices2(3))
+    >>> list(indices2(3))
     [(0, 0), (1, 1), (1, 0), (2, 2), (2, 1), (2, 0)]
 
     """
