@@ -51,9 +51,9 @@ def _relerr(dx: NDArray[Any], x: NDArray[Any]) -> float:
 def solve(
     cl: NDArray[Any],
     tfm: Transformation,
+    pad: int = 0,
     *,
     initial: NDArray[Any] | None = None,
-    n: int | None = None,
     cltol: float = 1e-5,
     gltol: float = 1e-5,
     maxiter: int = 20,
@@ -64,14 +64,15 @@ def solve(
 
     Parameters
     ----------
-    cl : (m,) array
+    cl : (n,) array
     tfm : :class:`Transformation`
+    pad : int
 
     Returns
     -------
-    gl : (m,) array
+    gl : (n,) array
         Gaussian angular power spectrum solution.
-    cl : (n,) array
+    cl : (n + pad,) array
         Realised transformed angular power spectrum.
     info : {0, 1, 2, 3}
         Indicates success of failure of the solution.  Possible values are
@@ -85,29 +86,23 @@ def solve(
 
     from ._twopoint import corr2cl, cl2corr, cl2var
 
-    m = len(cl)
-    if n is not None:
-        if not isinstance(n, int):
-            raise TypeError("n must be integer")
-        elif n < m:
-            raise ValueError("n must be larger than the length of cl")
-        k = n - m
-    else:
-        k = 2 * len(cl)
+    n = len(cl)
+    if not isinstance(pad, int) or pad < 0:
+        raise TypeError("pad must be a positive integer")
 
     if initial is None:
         gl = corr2cl(tfm.inv(cl2corr(cl), cl2var(cl)))
     else:
-        gl = np.empty(m)
-        gl[: len(initial)] = initial[:m]
+        gl = np.empty(n)
+        gl[: len(initial)] = initial[:n]
 
     if monopole is not None:
         gl[0] = monopole
 
-    gt = cl2corr(np.pad(gl, (0, k)))
+    gt = cl2corr(np.pad(gl, (0, pad)))
     var = cl2var(gl)
     rl = corr2cl(tfm(gt, var))
-    fl = rl[:m] - cl
+    fl = rl[:n] - cl
     if monopole is not None:
         fl[0] = 0
     clerr = _relerr(fl, cl)
@@ -119,18 +114,18 @@ def solve(
         if info > 0:
             break
 
-        ft = cl2corr(np.pad(fl, (0, k)))
+        ft = cl2corr(np.pad(fl, (0, pad)))
         dt = tfm.der(gt, var)
-        xl = -corr2cl(ft / dt)[:m]
+        xl = -corr2cl(ft / dt)[:n]
         if monopole is not None:
             xl[0] = 0
 
         while True:
             gl_ = gl + xl
-            gt_ = cl2corr(np.pad(gl_, (0, k)))
+            gt_ = cl2corr(np.pad(gl_, (0, pad)))
             var_ = cl2var(gl_)
             rl_ = corr2cl(tfm(gt_, var_))
-            fl_ = rl_[:m] - cl
+            fl_ = rl_[:n] - cl
             if monopole is not None:
                 fl_[0] = 0
             clerr_ = _relerr(fl_, cl)
