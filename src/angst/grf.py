@@ -223,7 +223,7 @@ def compute_generic(
     cl: NDArray[Any],
     tfm: Transformation,
     sht: Callable[[NDArray[Any], int], Alm],
-    isht: Callable[[Alm], NDArray[Any]],
+    isht: Callable[[Alm, int], NDArray[Any]],
 ) -> NDArray[Any]:
     """
     Compute a Gaussian angular power spectrum for the target spectrum
@@ -238,12 +238,17 @@ def compute_generic(
     transformation using the ``healpy`` spherical harmonic transform::
 
         import healpy as hp
+        import math
+
+        def nside_for_lmax(lmax):
+            "Return nside such that lmax <= 3/2 nside."
+            return 1 << math.ceil(math.log2(2 * lmax / 3))
 
         gl = angst.grf.compute_generic(
             cl,
             tfm,
             lambda m, lmax: hp.map2alm(m, lmax=lmax, use_pixel_weights=True),
-            lambda alm: hp.alm2map(alm, 2048),
+            lambda alm, lmax: hp.alm2map(alm, nside_for_lmax(lmax)),
         )
 
     """
@@ -267,7 +272,7 @@ def compute_generic(
     )
 
     # convert to field f(\theta, \phi) = C(\theta) exp(im\phi)
-    m = isht(alm)
+    m = isht(alm, lmax)
 
     # apply lognormal transform to C(theta)
     # (for complex fields, modify absolute value here)
