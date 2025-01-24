@@ -12,6 +12,7 @@ __all__ = [
     "solve",
 ]
 
+import math
 from dataclasses import dataclass
 
 import numpy as np
@@ -151,19 +152,23 @@ class Lognormal:
     lamda2: float = 1.0
 
     def __call__(self, x: NDArray[Any], var: float) -> NDArray[Any]:
-        return self.lamda1 * self.lamda2 * np.expm1(x)  # type: ignore[no-any-return]
+        xp = x.__array_namespace__()
+        return self.lamda1 * self.lamda2 * xp.expm1(x)  # type: ignore[no-any-return]
 
     def inv(self, x: NDArray[Any], var: float) -> NDArray[Any]:
-        return np.log1p(x / (self.lamda1 * self.lamda2))
+        xp = x.__array_namespace__()
+        return xp.log1p(x / (self.lamda1 * self.lamda2))  # type: ignore[no-any-return]
 
     def der(self, x: NDArray[Any], var: float) -> NDArray[Any]:
-        return self.lamda1 * self.lamda2 * np.exp(x)  # type: ignore[no-any-return]
+        xp = x.__array_namespace__()
+        return self.lamda1 * self.lamda2 * xp.exp(x)  # type: ignore[no-any-return]
 
 
 @dataclass
 class LognormalXNormal:
     """
-    Transformation for cross-correlation between lognormal and Gaussian fields.
+    Transformation for cross-correlation between lognormal and Gaussian
+    fields.
     """
 
     lamda: float = 1.0
@@ -192,8 +197,8 @@ class SquaredNormal:
     lamda2: float = 1.0
 
     def _pars(self, var: float) -> tuple[float, float]:
-        a1 = np.sqrt(1 - var) if self.a1 is None else self.a1
-        a2 = np.sqrt(1 - var) if self.a2 is None else self.a2
+        a1 = math.sqrt(1 - var) if self.a1 is None else self.a1
+        a2 = math.sqrt(1 - var) if self.a2 is None else self.a2
         return a1 * a2, self.lamda1 * self.lamda2
 
     def __call__(self, x: NDArray[Any], var: float) -> NDArray[Any]:
@@ -201,8 +206,9 @@ class SquaredNormal:
         return 2 * ll * x * (x + 2 * aa)
 
     def inv(self, x: NDArray[Any], var: float) -> NDArray[Any]:
+        xp = x.__array_namespace__()
         aa, ll = self._pars(var)
-        return np.sqrt(x / (2 * ll) + aa**2) - aa
+        return xp.sqrt(x / (2 * ll) + aa**2) - aa  # type: ignore[no-any-return]
 
     def der(self, x: NDArray[Any], var: float) -> NDArray[Any]:
         aa, ll = self._pars(var)
