@@ -1,6 +1,8 @@
 """angst -- angular statistics"""
 
 __all__ = [
+    "__version__",
+    "__version_tuple__",
     "cl2corr",
     "cl2var",
     "corr2cl",
@@ -10,8 +12,6 @@ __all__ = [
     "grf",
     "inv_triangle_number",
     "indices2",
-    "__version__",
-    "__version_tuple__",
 ]
 
 from . import grf
