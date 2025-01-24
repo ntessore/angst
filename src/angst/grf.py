@@ -221,7 +221,7 @@ Alm = NDArray[np.complexfloating[Any, Any]]
 def spectrum_from_sht(
     cl: NDArray[Any],
     tfm: Transformation,
-    sht: Callable[[NDArray[Any]], Alm],
+    sht: Callable[[NDArray[Any], int], Alm],
     isht: Callable[[Alm], NDArray[Any]],
 ) -> NDArray[Any]:
     """
@@ -255,7 +255,7 @@ def spectrum_from_sht(
     m = tfm.inv(m, var)
 
     # get transformed alms
-    alm = sht(m)
+    alm = sht(m, lmax)
 
     # read Gaussian spectrum from m=0
     return alm.real[: lmax + 1] / fl  # type: ignore[no-any-return]
