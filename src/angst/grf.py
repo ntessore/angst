@@ -225,8 +225,11 @@ def spectrum_from_sht(
     isht: Callable[[Alm], NDArray[Any]],
 ) -> NDArray[Any]:
     """
-    Compute a Gaussian angular power spectrum for the transformation
-    *tfm* using the spherical harmonic transform pair *sht* and *isht*.
+    Compute a Gaussian angular power spectrum for the target spectrum
+    *cl* and the transformation *tfm*.  Uses the spherical harmonic
+    transform pair *sht* and *isht* to compute a simple band-limited
+    Gaussian power spectrum, without the full machinery of
+    :func:`solve`.
     """
 
     xp = cl.__array_namespace__()
