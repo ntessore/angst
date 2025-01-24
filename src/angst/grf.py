@@ -18,7 +18,7 @@ from dataclasses import dataclass
 import numpy as np
 
 # typing
-from typing import Any, Callable, Protocol, TypeAlias
+from typing import Any, Callable, Protocol
 from numpy.typing import NDArray
 
 
@@ -215,7 +215,7 @@ class SquaredNormal:
         return 4 * ll * (x + aa)
 
 
-Alm: TypeAlias = NDArray[np.complexfloating[Any, Any]]
+Alm = NDArray[np.complexfloating[Any, Any]]
 
 
 def spectrum_from_sht(
