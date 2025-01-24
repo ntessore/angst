@@ -151,13 +151,13 @@ class Lognormal:
     lamda2: float = 1.0
 
     def __call__(self, x: NDArray[Any], var: float) -> NDArray[Any]:
-        return self.lamda1 * self.lamda2 * np.expm1(x)  # type: ignore
+        return self.lamda1 * self.lamda2 * np.expm1(x)  # type: ignore[no-any-return]
 
     def inv(self, x: NDArray[Any], var: float) -> NDArray[Any]:
-        return np.log1p(x / (self.lamda1 * self.lamda2))  # type: ignore
+        return np.log1p(x / (self.lamda1 * self.lamda2))
 
     def der(self, x: NDArray[Any], var: float) -> NDArray[Any]:
-        return self.lamda1 * self.lamda2 * np.exp(x)  # type: ignore
+        return self.lamda1 * self.lamda2 * np.exp(x)  # type: ignore[no-any-return]
 
 
 @dataclass
@@ -202,7 +202,7 @@ class SquaredNormal:
 
     def inv(self, x: NDArray[Any], var: float) -> NDArray[Any]:
         aa, ll = self._pars(var)
-        return np.sqrt(x / (2 * ll) + aa**2) - aa  # type: ignore
+        return np.sqrt(x / (2 * ll) + aa**2) - aa
 
     def der(self, x: NDArray[Any], var: float) -> NDArray[Any]:
         aa, ll = self._pars(var)
