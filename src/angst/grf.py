@@ -16,6 +16,7 @@ __all__ = [
 import math
 from dataclasses import dataclass
 
+from array_api_compat import array_namespace  # type: ignore[import-not-found]
 import numpy as np
 
 # typing
@@ -153,15 +154,15 @@ class Lognormal:
     lamda2: float = 1.0
 
     def __call__(self, x: NDArray[Any], var: float) -> NDArray[Any]:
-        xp = x.__array_namespace__()
+        xp = array_namespace(x)
         return self.lamda1 * self.lamda2 * xp.expm1(x)  # type: ignore[no-any-return]
 
     def inv(self, x: NDArray[Any], var: float) -> NDArray[Any]:
-        xp = x.__array_namespace__()
+        xp = array_namespace(x)
         return xp.log1p(x / (self.lamda1 * self.lamda2))  # type: ignore[no-any-return]
 
     def der(self, x: NDArray[Any], var: float) -> NDArray[Any]:
-        xp = x.__array_namespace__()
+        xp = array_namespace(x)
         return self.lamda1 * self.lamda2 * xp.exp(x)  # type: ignore[no-any-return]
 
 
@@ -207,7 +208,7 @@ class SquaredNormal:
         return 2 * ll * x * (x + 2 * aa)
 
     def inv(self, x: NDArray[Any], var: float) -> NDArray[Any]:
-        xp = x.__array_namespace__()
+        xp = array_namespace(x)
         aa, ll = self._pars(var)
         return xp.sqrt(x / (2 * ll) + aa**2) - aa  # type: ignore[no-any-return]
 
@@ -253,7 +254,7 @@ def compute_generic(
 
     """
 
-    xp = cl.__array_namespace__()
+    xp = array_namespace(cl)
 
     # get lmax from cl
     lmax = cl.size - 1
