@@ -18,7 +18,7 @@ from dataclasses import dataclass
 import numpy as np
 
 # typing
-from typing import Any, Protocol
+from typing import Any, Callable, Protocol, TypeAlias
 from numpy.typing import NDArray
 
 
@@ -213,3 +213,49 @@ class SquaredNormal:
     def der(self, x: NDArray[Any], var: float) -> NDArray[Any]:
         aa, ll = self._pars(var)
         return 4 * ll * (x + aa)
+
+
+Alm: TypeAlias = NDArray[np.complexfloating[Any, Any]]
+
+
+def spectrum_from_sht(
+    cl: NDArray[Any],
+    tfm: Transformation,
+    sht: Callable[[NDArray[Any]], Alm],
+    isht: Callable[[Alm], NDArray[Any]],
+) -> NDArray[Any]:
+    """
+    Compute a Gaussian angular power spectrum for the transformation
+    *tfm* using the spherical harmonic transform pair *sht* and *isht*.
+    """
+
+    xp = cl.__array_namespace__()
+
+    # get lmax from cl
+    lmax = cl.size - 1
+
+    # store prefactor, compute variance
+    fl = (2 * xp.arange(lmax + 1) + 1) / (4 * xp.pi)
+    var = (fl * cl).sum()
+    fl = xp.sqrt(fl)
+
+    # compute alms for m=0, rest zero
+    alm = xp.concat(
+        [
+            fl * cl,
+            xp.zeros(lmax * (lmax + 1) // 2, dtype=complex),
+        ],
+    )
+
+    # convert to field f(\theta, \phi) = C(\theta) exp(im\phi)
+    m = isht(alm)
+
+    # apply lognormal transform to C(theta)
+    # (for complex fields, modify absolute value here)
+    m = tfm.inv(m, var)
+
+    # get transformed alms
+    alm = sht(m)
+
+    # read Gaussian spectrum from m=0
+    return alm.real[: lmax + 1] / fl  # type: ignore[no-any-return]
