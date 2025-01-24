@@ -7,12 +7,18 @@
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Contents
 
    points
-   spectra
+   twopoint
    core
    glossary
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Modules
+
+   grf
 
 
 Indices and tables

@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 
-def test_enumerate_spectra():
+def test_enumerate2():
     import angst
 
     n = 100
@@ -15,7 +15,7 @@ def test_enumerate_spectra():
     indices = [(i, j) for i in range(n) for j in range(i, -1, -1)]
 
     # iterator that will enumerate the spectra for checking
-    it = angst.enumerate_spectra(spectra)
+    it = angst.enumerate2(spectra)
 
     # go through expected indices and values and compare
     for k, (i, j) in enumerate(indices):
@@ -26,13 +26,13 @@ def test_enumerate_spectra():
         next(it)
 
 
-def test_spectra_indices():
+def test_indices2():
     import angst
 
-    assert list(angst.spectra_indices(0)) == []
-    assert list(angst.spectra_indices(1)) == [(0, 0)]
-    assert list(angst.spectra_indices(2)) == [(0, 0), (1, 1), (1, 0)]
-    assert list(angst.spectra_indices(3)) == [
+    assert list(angst.indices2(0)) == []
+    assert list(angst.indices2(1)) == [(0, 0)]
+    assert list(angst.indices2(2)) == [(0, 0), (1, 1), (1, 0)]
+    assert list(angst.indices2(3)) == [
         (0, 0),
         (1, 1),
         (1, 0),

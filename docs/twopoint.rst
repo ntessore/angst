@@ -1,22 +1,31 @@
-Angular power spectra
-=====================
+Two-point functions
+===================
 
 .. currentmodule:: angst
 
 
-Sets of angular power spectra
------------------------------
+Spectra and correlation functions
+---------------------------------
 
-.. autofunction:: spectra_indices
-.. autofunction:: enumerate_spectra
+.. autofunction:: cl2corr
+.. autofunction:: corr2cl
+
+.. autofunction:: cl2var
 
 
-.. _spectra_order:
+Sets of two-point functions
+---------------------------
+
+.. autofunction:: indices2
+.. autofunction:: enumerate2
+
+
+.. _twopoint_order:
 
 Standard order
 --------------
 
-All functions that process sets of angular power spectra expect them as a
+All functions that process sets of two-point functions expect them as a
 sequence using the following "Christmas tree" ordering:
 
 .. raw:: html
@@ -32,9 +41,8 @@ In other words, the sequence begins as such:
 * index 5 describes the cross-correlation of field 2 and field 0,
 * etc.
 
-In particular, cross-correlations for the first :math:`n` fields are contained
+In particular, two-point functions for the first :math:`n` fields are contained
 in the first :math:`T_n = n \, (n + 1) / 2` entries of the sequence.
 
-To easily generate or iterate over sequences of angular power spectra in
-standard order, see the :func:`enumerate_spectra` and :func:`spectra_indices`
-functions.
+To easily generate or iterate over sequences of two-point functions in standard
+order, see the :func:`enumerate2` and :func:`indices2` functions.
