@@ -9,6 +9,7 @@ __all__ = [
     "LognormalXNormal",
     "SquaredNormal",
     "Transformation",
+    "compute_generic",
     "solve",
 ]
 
@@ -218,7 +219,7 @@ class SquaredNormal:
 Alm = NDArray[np.complexfloating[Any, Any]]
 
 
-def spectrum_from_sht(
+def compute_generic(
     cl: NDArray[Any],
     tfm: Transformation,
     sht: Callable[[NDArray[Any], int], Alm],
@@ -230,6 +231,21 @@ def spectrum_from_sht(
     transform pair *sht* and *isht* to compute a simple band-limited
     Gaussian power spectrum, without the full machinery of
     :func:`solve`.
+
+    Examples
+    --------
+    Compute a Gaussian angular power spectrum for a lognormal
+    transformation using the *healpy* spherical harmonic transform.
+
+    >>> import healpy as hp
+    >>> tfm = angst.grf.Lognormal()
+    >>> gl = angst.grf.compute_sht(
+    ...     cl,
+    ...     tfm,
+    ...     lambda m, lmax: hp.map2alm(m, lmax=lmax, use_pixel_weights=True),
+    ...     lambda alm: hp.alm2map(alm, 2048),
+    ... )
+
     """
 
     xp = cl.__array_namespace__()

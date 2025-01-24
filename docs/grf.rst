@@ -10,6 +10,12 @@ Gaussian angular power spectra
 
 .. autofunction:: solve
 
+.. autofunction:: compute_generic
+
+
+Transformations
+---------------
+
 .. class:: Transformation(Protocol)
 
    .. automethod:: __call__
@@ -17,17 +23,16 @@ Gaussian angular power spectra
    .. automethod:: der
 
 
-Transformations
----------------
-
 .. class:: Lognormal
 
    Implements the :class:`Transformation` for lognormal fields.
+
 
 .. class:: LognormalXNormal
 
    Implements the :class:`Transformation` for the cross-correlation between
    :class:`Lognormal` and Gaussian fields.
+
 
 .. class:: SquaredNormal
 
