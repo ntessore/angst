@@ -8,9 +8,8 @@
 Gaussian angular power spectra
 ------------------------------
 
+.. autofunction:: compute
 .. autofunction:: solve
-
-.. autofunction:: compute_generic
 
 
 Transformations
