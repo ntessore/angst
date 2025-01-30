@@ -11,6 +11,9 @@ __all__ = [
     "Transformation",
     "compute",
     "solve",
+    "corr",
+    "icorr",
+    "dcorr",
 ]
 
 import functools
@@ -24,23 +27,42 @@ import numpy as np
 from typing import Any, Callable, Protocol, TypeVar
 from numpy.typing import NDArray
 
+ArrayT = TypeVar("ArrayT", bound="Array")
+TransformationT = TypeVar("TransformationT", bound="Transformation")
+
+
+class Array(Protocol):
+    """
+    Protocol for arrays.
+    """
+
+    shape: tuple[int, ...]
+
+    def __add__(self: ArrayT, other: ArrayT | float) -> ArrayT: ...
+    def __sub__(self: ArrayT, other: ArrayT | float) -> ArrayT: ...
+    def __mul__(self: ArrayT, other: ArrayT | float) -> ArrayT: ...
+    def __truediv__(self: ArrayT, other: ArrayT | float) -> ArrayT: ...
+    def __pow__(self: ArrayT, other: ArrayT | float) -> ArrayT: ...
+
+    def __radd__(self: ArrayT, other: ArrayT | float) -> ArrayT: ...
+    def __rsub__(self: ArrayT, other: ArrayT | float) -> ArrayT: ...
+    def __rmul__(self: ArrayT, other: ArrayT | float) -> ArrayT: ...
+    def __rtruediv__(self: ArrayT, other: ArrayT | float) -> ArrayT: ...
+    def __rpow__(self: ArrayT, other: ArrayT | float) -> ArrayT: ...
+
 
 class Transformation(Protocol):
     """
     Protocol for transformations of Gaussian random fields.
     """
 
-    def __call__(self, x: NDArray[Any], var: float, /) -> NDArray[Any]:
+    def __call__(self, x: ArrayT, var: float, /) -> ArrayT:
         """
-        Transform a Gaussian random field.
+        Transform a Gaussian random field *x* with variance *var*.
         """
 
 
-ArrayT = TypeVar("ArrayT")
-TfmT = TypeVar("TfmT", bound=Transformation)
-
-
-class Dispatchable(Protocol):
+class Dispatch(Protocol):
     """
     Protocol for the result of dispatch().
     """
@@ -50,13 +72,14 @@ class Dispatchable(Protocol):
     ) -> ArrayT: ...
 
     def add(
-        self, impl: Callable[[TfmT, TfmT, ArrayT], ArrayT]
-    ) -> Callable[[TfmT, TfmT, ArrayT], ArrayT]: ...
+        self,
+        impl: Callable[[TransformationT, TransformationT, ArrayT], ArrayT],
+    ) -> Callable[[TransformationT, TransformationT, ArrayT], ArrayT]: ...
 
 
 def dispatch(
     func: Callable[[Transformation, Transformation, ArrayT], ArrayT],
-) -> Dispatchable:
+) -> Dispatch:
     """
     Create a simple dispatcher for transformation pairs.
     """
@@ -66,8 +89,8 @@ def dispatch(
     register = outer.register
 
     def add(
-        impl: Callable[[TfmT, TfmT, ArrayT], ArrayT],
-    ) -> Callable[[TfmT, TfmT, ArrayT], ArrayT]:
+        impl: Callable[[TransformationT, TransformationT, ArrayT], ArrayT],
+    ) -> Callable[[TransformationT, TransformationT, ArrayT], ArrayT]:
         from inspect import signature
         from typing import get_type_hints
 
@@ -106,7 +129,7 @@ def dispatch(
 
 
 @dispatch
-def forward(t1: Transformation, t2: Transformation, x: ArrayT, /) -> ArrayT:
+def corr(t1: Transformation, t2: Transformation, x: ArrayT, /) -> ArrayT:
     """
     Transform a Gaussian angular correlation function.
 
@@ -129,7 +152,7 @@ def forward(t1: Transformation, t2: Transformation, x: ArrayT, /) -> ArrayT:
 
 
 @dispatch
-def backward(t1: Transformation, t2: Transformation, x: ArrayT, /) -> ArrayT:
+def icorr(t1: Transformation, t2: Transformation, x: ArrayT, /) -> ArrayT:
     """
     Inverse-transform an angular correlation function.
 
@@ -152,7 +175,7 @@ def backward(t1: Transformation, t2: Transformation, x: ArrayT, /) -> ArrayT:
 
 
 @dispatch
-def derivative(t1: Transformation, t2: Transformation, x: ArrayT, /) -> ArrayT:
+def dcorr(t1: Transformation, t2: Transformation, x: ArrayT, /) -> ArrayT:
     """
     Derivative of the angular correlation function transform.
 
@@ -175,10 +198,10 @@ def derivative(t1: Transformation, t2: Transformation, x: ArrayT, /) -> ArrayT:
 
 
 def compute(
-    cl: NDArray[Any],
+    cl: ArrayT,
     t1: Transformation,
     t2: Transformation | None = None,
-) -> NDArray[Any]:
+) -> ArrayT:
     """
     Compute a band-limited Gaussian angular power spectrum for the
     target spectrum *cl* and the transformations *t1* and *t2*.  If *t2*
@@ -222,7 +245,7 @@ def compute(
     fl = (2 * xp.arange(lmax + 1) + 1) / (4 * xp.pi)
 
     # transform C_l to C(\theta), apply transformation, and transform back
-    return flt.dlt(backward(t1, t2, flt.idlt(cl * fl))) / fl  # type: ignore[no-any-return]
+    return flt.dlt(icorr(t1, t2, flt.idlt(cl * fl))) / fl  # type: ignore[no-any-return]
 
 
 def _relerr(dx: NDArray[Any], x: NDArray[Any]) -> float:
@@ -281,7 +304,7 @@ def solve(
         raise TypeError("pad must be a positive integer")
 
     if initial is None:
-        gl = corr2cl(backward(t1, t2, cl2corr(cl)))
+        gl = corr2cl(icorr(t1, t2, cl2corr(cl)))
     else:
         gl = np.zeros(n)
         gl[: len(initial)] = initial[:n]
@@ -290,7 +313,7 @@ def solve(
         gl[0] = monopole
 
     gt = cl2corr(np.pad(gl, (0, pad)))
-    rl = corr2cl(forward(t1, t2, gt))
+    rl = corr2cl(corr(t1, t2, gt))
     fl = rl[:n] - cl
     if monopole is not None:
         fl[0] = 0
@@ -304,7 +327,7 @@ def solve(
             break
 
         ft = cl2corr(np.pad(fl, (0, pad)))
-        dt = derivative(t1, t2, gt)
+        dt = dcorr(t1, t2, gt)
         xl = -corr2cl(ft / dt)[:n]
         if monopole is not None:
             xl[0] = 0
@@ -312,7 +335,7 @@ def solve(
         while True:
             gl_ = gl + xl
             gt_ = cl2corr(np.pad(gl_, (0, pad)))
-            rl_ = corr2cl(forward(t1, t2, gt_))
+            rl_ = corr2cl(corr(t1, t2, gt_))
             fl_ = rl_[:n] - cl
             if monopole is not None:
                 fl_[0] = 0
@@ -329,13 +352,18 @@ def solve(
     return gl, rl, info
 
 
+########################################################################
+# transformations
+########################################################################
+
+
 @dataclass
 class Normal:
     """
     Transformation for normal fields.
     """
 
-    def __call__(self, x: NDArray[Any], var: float, /) -> NDArray[Any]:
+    def __call__(self, x: ArrayT, var: float, /) -> ArrayT:
         return x
 
 
@@ -347,69 +375,12 @@ class Lognormal:
 
     lamda: float = 1.0
 
-    def __call__(self, x: NDArray[Any], var: float, /) -> NDArray[Any]:
+    def __call__(self, x: ArrayT, var: float, /) -> ArrayT:
         xp = array_namespace(x)
         x = xp.expm1(x - var / 2)
         if self.lamda != 1.0:
             x = self.lamda * x
         return x
-
-
-# normal x normal
-
-
-@forward.add
-def _(t1: Normal, t2: Normal, x: NDArray[Any], /) -> NDArray[Any]:
-    return x
-
-
-@backward.add
-def _(t1: Normal, t2: Normal, x: NDArray[Any], /) -> NDArray[Any]:
-    return x
-
-
-@derivative.add
-def _(t1: Normal, t2: Normal, x: NDArray[Any], /) -> NDArray[Any]:
-    return 1.0 + (0 * x)
-
-
-# lognormal x lognormal
-
-
-@forward.add
-def _(t1: Lognormal, t2: Lognormal, x: NDArray[Any], /) -> NDArray[Any]:
-    xp = array_namespace(x)
-    return t1.lamda * t2.lamda * xp.expm1(x)  # type: ignore[no-any-return]
-
-
-@backward.add
-def _(t1: Lognormal, t2: Lognormal, x: NDArray[Any], /) -> NDArray[Any]:
-    xp = array_namespace(x)
-    return xp.log1p(x / (t1.lamda * t2.lamda))  # type: ignore[no-any-return]
-
-
-@derivative.add
-def _(t1: Lognormal, t2: Lognormal, x: NDArray[Any], /) -> NDArray[Any]:
-    xp = array_namespace(x)
-    return t1.lamda * t2.lamda * xp.exp(x)  # type: ignore[no-any-return]
-
-
-# lognormal x normal
-
-
-@forward.add
-def _(t1: Lognormal, t2: Normal, x: NDArray[Any], /) -> NDArray[Any]:
-    return t1.lamda * x
-
-
-@backward.add
-def _(t1: Lognormal, t2: Normal, x: NDArray[Any], /) -> NDArray[Any]:
-    return x / t1.lamda
-
-
-@derivative.add
-def _(t1: Lognormal, t2: Normal, x: NDArray[Any], /) -> NDArray[Any]:
-    return t1.lamda + (0.0 * x)
 
 
 @dataclass
@@ -421,30 +392,98 @@ class SquaredNormal:
     a: float
     lamda: float = 1.0
 
-    def __call__(self, x: NDArray[Any], var: float, /) -> NDArray[Any]:
+    def __call__(self, x: ArrayT, var: float, /) -> ArrayT:
         x = (x - self.a) ** 2 - 1
         if self.lamda != 1.0:
             x = self.lamda * x
         return x
 
 
-@forward.add
-def _(t1: SquaredNormal, t2: SquaredNormal, x: NDArray[Any], /) -> NDArray[Any]:
+########################################################################
+# normal x normal
+########################################################################
+
+
+@corr.add
+def _(t1: Normal, t2: Normal, x: ArrayT, /) -> ArrayT:
+    return x
+
+
+@icorr.add
+def _(t1: Normal, t2: Normal, x: ArrayT, /) -> ArrayT:
+    return x
+
+
+@dcorr.add
+def _(t1: Normal, t2: Normal, x: ArrayT, /) -> ArrayT:
+    return 1.0 + (0 * x)
+
+
+########################################################################
+# lognormal x lognormal
+########################################################################
+
+
+@corr.add
+def _(t1: Lognormal, t2: Lognormal, x: ArrayT, /) -> ArrayT:
+    xp = array_namespace(x)
+    return t1.lamda * t2.lamda * xp.expm1(x)  # type: ignore[no-any-return]
+
+
+@icorr.add
+def _(t1: Lognormal, t2: Lognormal, x: ArrayT, /) -> ArrayT:
+    xp = array_namespace(x)
+    return xp.log1p(x / (t1.lamda * t2.lamda))  # type: ignore[no-any-return]
+
+
+@dcorr.add
+def _(t1: Lognormal, t2: Lognormal, x: ArrayT, /) -> ArrayT:
+    xp = array_namespace(x)
+    return t1.lamda * t2.lamda * xp.exp(x)  # type: ignore[no-any-return]
+
+
+########################################################################
+# lognormal x normal
+########################################################################
+
+
+@corr.add
+def _(t1: Lognormal, t2: Normal, x: ArrayT, /) -> ArrayT:
+    return t1.lamda * x
+
+
+@icorr.add
+def _(t1: Lognormal, t2: Normal, x: ArrayT, /) -> ArrayT:
+    return x / t1.lamda
+
+
+@dcorr.add
+def _(t1: Lognormal, t2: Normal, x: ArrayT, /) -> ArrayT:
+    return t1.lamda + (0.0 * x)
+
+
+########################################################################
+# squared normal x squared normal
+########################################################################
+
+
+@corr.add
+def _(t1: SquaredNormal, t2: SquaredNormal, x: ArrayT, /) -> ArrayT:
     aa = t1.a * t2.a
     ll = t1.lamda * t2.lamda
     return 2 * ll * x * (x + 2 * aa)
 
 
-@backward.add
-def _(t1: SquaredNormal, t2: SquaredNormal, x: NDArray[Any], /) -> NDArray[Any]:
+@icorr.add
+def _(t1: SquaredNormal, t2: SquaredNormal, x: ArrayT, /) -> ArrayT:
     xp = array_namespace(x)
     aa = t1.a * t2.a
     ll = t1.lamda * t2.lamda
     return xp.sqrt(x / (2 * ll) + aa**2) - aa  # type: ignore[no-any-return]
 
 
-@derivative.add
-def _(t1: SquaredNormal, t2: SquaredNormal, x: NDArray[Any], /) -> NDArray[Any]:
+@dcorr.add
+def _(t1: SquaredNormal, t2: SquaredNormal, x: ArrayT, /) -> ArrayT:
     aa = t1.a * t2.a
     ll = t1.lamda * t2.lamda
     return 4 * ll * (x + aa)
