@@ -9,7 +9,7 @@ __all__ = [
     "LognormalXNormal",
     "SquaredNormal",
     "Transformation",
-    "compute_generic",
+    "compute",
     "solve",
 ]
 
@@ -17,10 +17,11 @@ import math
 from dataclasses import dataclass
 
 from array_api_compat import array_namespace  # type: ignore[import-not-found]
+import flt  # type: ignore[import-not-found]
 import numpy as np
 
 # typing
-from typing import Any, Callable, Protocol
+from typing import Any, Protocol
 from numpy.typing import NDArray
 
 
@@ -43,6 +44,42 @@ class Transformation(Protocol):
         """
         Derivative of the transform.
         """
+
+
+def compute(cl: NDArray[Any], tfm: Transformation) -> NDArray[Any]:
+    """
+    Compute a band-limited Gaussian angular power spectrum for the
+    target spectrum *cl* and the transformation *tfm*.
+
+    Examples
+    --------
+    Compute a Gaussian angular power spectrum ``gl`` for a lognormal
+    transformation::
+
+        tfm = angst.grf.Lognormal()
+        gl = angst.grf.compute(cl, tfm)
+
+    See also
+    --------
+    angst.grf.solve: Iterative solver for not-band-limited spectra.
+
+    """
+
+    xp = array_namespace(cl)
+
+    # get lmax from cl
+    lmax = cl.shape[-1] - 1
+
+    # store prefactor and compute variance
+    fl = (2 * xp.arange(lmax + 1) + 1) / (4 * xp.pi)
+    var = (fl * cl).sum()
+
+    # transform C_l to C(\theta), apply transformation, and transform back
+    ct = flt.idlt(cl * fl)
+    gt = tfm.inv(ct, var)
+    gl = flt.dlt(gt) / fl
+
+    return gl  # type: ignore[no-any-return]
 
 
 def _relerr(dx: NDArray[Any], x: NDArray[Any]) -> float:
@@ -84,6 +121,10 @@ def solve(
         * ``1``, solution converged in *cl* relative error;
         * ``2``, solution converged in *gl* relative error;
         * ``3``, solution converged in both *cl* and *gl* relative error.
+
+    See also
+    --------
+    angst.grf.compute: Direct computation for band-limited spectra.
 
     """
 
@@ -215,72 +256,3 @@ class SquaredNormal:
     def der(self, x: NDArray[Any], var: float) -> NDArray[Any]:
         aa, ll = self._pars(var)
         return 4 * ll * (x + aa)
-
-
-Alm = NDArray[np.complexfloating[Any, Any]]
-
-
-def compute_generic(
-    cl: NDArray[Any],
-    tfm: Transformation,
-    sht: Callable[[NDArray[Any], int], Alm],
-    isht: Callable[[Alm, int], NDArray[Any]],
-) -> NDArray[Any]:
-    """
-    Compute a Gaussian angular power spectrum for the target spectrum
-    *cl* and the transformation *tfm*.  Uses the spherical harmonic
-    transform pair *sht* and *isht* to compute a simple band-limited
-    Gaussian power spectrum, without the full machinery of
-    :func:`solve`.
-
-    Examples
-    --------
-    Compute a Gaussian angular power spectrum for a lognormal
-    transformation using the ``healpy`` spherical harmonic transform::
-
-        import healpy as hp
-        import math
-
-        def nside_for_lmax(lmax):
-            "Return nside such that lmax <= 3/2 nside."
-            return 1 << math.ceil(math.log2(2 * lmax / 3))
-
-        gl = angst.grf.compute_generic(
-            cl,
-            tfm,
-            lambda m, lmax: hp.map2alm(m, lmax=lmax, use_pixel_weights=True),
-            lambda alm, lmax: hp.alm2map(alm, nside_for_lmax(lmax)),
-        )
-
-    """
-
-    xp = array_namespace(cl)
-
-    # get lmax from cl
-    lmax = cl.size - 1
-
-    # store prefactor, compute variance
-    fl = (2 * xp.arange(lmax + 1) + 1) / (4 * xp.pi)
-    var = (fl * cl).sum()
-    fl = xp.sqrt(fl)
-
-    # compute alms for m=0, rest zero
-    alm = xp.concat(
-        [
-            fl * cl,
-            xp.zeros(lmax * (lmax + 1) // 2, dtype=complex),
-        ],
-    )
-
-    # convert to field f(\theta, \phi) = C(\theta) exp(im\phi)
-    m = isht(alm, lmax)
-
-    # apply lognormal transform to C(theta)
-    # (for complex fields, modify absolute value here)
-    m = tfm.inv(m, var)
-
-    # get transformed alms
-    alm = sht(m, lmax)
-
-    # read Gaussian spectrum from m=0
-    return alm.real[: lmax + 1] / fl  # type: ignore[no-any-return]
