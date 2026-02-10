@@ -9,7 +9,6 @@
    :maxdepth: 2
    :caption: Contents
 
-   points
    twopoint
    core
    glossary
