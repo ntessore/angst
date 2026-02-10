@@ -9,12 +9,9 @@ __all__ = [
     "displace",
     "displacement",
     "enumerate2",
-    "grf",
     "inv_triangle_number",
     "indices2",
 ]
-
-from . import grf
 
 from ._core import (
     inv_triangle_number,
