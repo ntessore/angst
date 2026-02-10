@@ -14,12 +14,6 @@
    core
    glossary
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Modules
-
-   grf
-
 
 Indices and tables
 ==================
