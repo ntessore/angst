@@ -6,8 +6,6 @@ __all__ = [
     "cl2corr",
     "cl2var",
     "corr2cl",
-    "displace",
-    "displacement",
     "enumerate2",
     "inv_triangle_number",
     "indices2",
@@ -15,11 +13,6 @@ __all__ = [
 
 from ._core import (
     inv_triangle_number,
-)
-
-from ._points import (
-    displace,
-    displacement,
 )
 
 from ._twopoint import (
