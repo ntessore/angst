@@ -12,6 +12,7 @@
    twopoint
    core
    glossary
+   bibliography
 
 
 Indices and tables
