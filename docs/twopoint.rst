@@ -13,6 +13,15 @@ Spectra and correlation functions
 .. autofunction:: cl2var
 
 
+Shot noise bias
+---------------
+
+Compute the value of the shot noise bias contribution to angular power spectra.
+For reference, see [arXiv:2408.16903]_ and [arXiv:2507.03749]_.
+
+.. autofunction:: shotnoise
+
+
 Sets of two-point functions
 ---------------------------
 

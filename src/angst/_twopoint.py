@@ -4,6 +4,8 @@ Module for two-point functions.
 
 from __future__ import annotations
 
+import math
+
 import numpy as np
 
 # typing
@@ -145,3 +147,55 @@ def cl2var(cl: NDArray[Any]) -> float:
     """
     ell = np.arange(np.shape(cl)[-1])
     return np.sum((2 * ell + 1) / (4 * np.pi) * cl)  # type: ignore
+
+
+def shotnoise(
+    *,
+    values: NDArray[Any] | None = None,
+    weights: NDArray[Any] | None = None,
+    area: float | None = None,
+    nside: int | None = None,
+) -> float:
+    """
+    Compute the shot noise bias from *values* and *weights*.
+
+    The returned value can be normalised by the effective pixel area.
+
+    * If *area* is given, it is assumed that the spectra are computed with a
+      convolution kernel of this area.
+    * If *nside* is given, it is assumed that the spectra are computed from
+      HEALPix maps of this resolution, which implicitly sets *area*.
+
+    This function computes the "raw" shot noise bias of a random field.  The
+    returned value should be divided by two to obtain the shot noise bias for
+    E/B-mode power spectra.
+
+    """
+    # needs one input at least
+    if values is None and weights is None:
+        raise ValueError("requires values or weights")
+
+    # cannot set nside and area at the same time
+    if area is not None and nside is not None:
+        raise ValueError("cannot set both area and nside")
+
+    # account for weights
+    if weights is not None:
+        if values is None:
+            values = weights
+        else:
+            values = weights * values
+
+    assert values is not None
+
+    # compute area from HEALPix NSIDE if given
+    if nside is not None:
+        area = (4 * math.pi) / (12 * nside**2)
+
+    # gather all prefactors
+    fact = 1 / (4 * math.pi)
+    if area is not None:
+        fact = fact * area**2
+
+    # compute compensated sum from catalgue
+    return fact * math.fsum(values.real**2 + values.imag**2)

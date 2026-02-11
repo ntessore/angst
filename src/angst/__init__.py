@@ -9,6 +9,7 @@ __all__ = [
     "enumerate2",
     "inv_triangle_number",
     "indices2",
+    "shotnoise",
 ]
 
 from ._core import (
@@ -21,6 +22,7 @@ from ._twopoint import (
     corr2cl,
     enumerate2,
     indices2,
+    shotnoise,
 )
 
 from ._version import (
